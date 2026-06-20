@@ -479,6 +479,29 @@ a {
     transform: scale(1) translateY(0);
   }
 }
+@keyframes gacha-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(44px) scale(0.86);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes gacha-border-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
 @keyframes gacha-shimmer {
   0% {
     transform: translateX(-100%);
