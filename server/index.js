@@ -5,18 +5,23 @@ const cors = require("cors");
 
 const app = express();
 
-// Allow requests from local dev and the deployed Vercel frontend.
-// Set FRONTEND_URL on Render to your Vercel app URL.
+// Allow local dev, the production Vercel URL, and any Vercel preview deployments.
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL, // e.g. https://raifaissen-hackathon.vercel.app
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow non-browser requests (Render health checks, etc.) and listed origins
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      if (!origin) return cb(null, true); // server-to-server / health checks
+      // exact match OR any vercel.app subdomain
+      if (
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)
+      ) {
+        return cb(null, true);
+      }
       cb(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
