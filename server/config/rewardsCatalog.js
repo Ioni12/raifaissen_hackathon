@@ -1,0 +1,17 @@
+module.exports = [
+  { id: 'default', label: 'Standard Black Card', type: 'skin', tier: 'common', threshold: 0 },
+  { id: 'skin_navy', label: 'Navy Card Skin', type: 'skin', tier: 'common', threshold: 5 },
+  { id: 'skin_midnight', label: 'Midnight Card Skin', type: 'skin', tier: 'common', threshold: 8 },
+  { id: 'skin_forest', label: 'Forest Card Skin', type: 'skin', tier: 'common', threshold: 12 },
+  { id: 'skin_crimson', label: 'Crimson Card Skin', type: 'skin', tier: 'common', threshold: 16 },
+  { id: 'border_neon', label: 'Neon Border', type: 'skin', tier: 'rare', threshold: 20 },
+  { id: 'border_gold_wave', label: 'Gold Wave Border', type: 'skin', tier: 'rare', threshold: 25 },
+  { id: 'border_aurora', label: 'Aurora Border', type: 'skin', tier: 'rare', threshold: 30 },
+  { id: 'skin_holographic', label: 'Holographic Skin', type: 'skin', tier: 'rare', threshold: 35 },
+  { id: 'theme_neon_city', label: 'Neon City Theme', type: 'theme', tier: 'ultra_rare', threshold: 45 },
+  { id: 'theme_volcanic', label: 'Volcanic Theme', type: 'theme', tier: 'ultra_rare', threshold: 55 },
+  { id: 'theme_arctic', label: 'Arctic Theme', type: 'theme', tier: 'ultra_rare', threshold: 65 },
+  { id: 'theme_sakura', label: 'Sakura Theme', type: 'theme', tier: 'ultra_rare', threshold: 75 },
+  { id: 'legendary_tirana_founding', label: 'Tirana Founding Badge', type: 'badge', tier: 'legendary', threshold: 90 },
+  { id: 'legendary_pyramid', label: 'Pyramid Collab Theme', type: 'theme', tier: 'legendary', threshold: 110 },
+];
