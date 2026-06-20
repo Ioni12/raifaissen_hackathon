@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import RewardReveal from "../components/RewardReveal";
+import MultiPullReveal from "../components/MultiPullReveal";
 import { getSkin } from "../config/skinConfig";
 import {
   Trophy,
@@ -419,6 +420,8 @@ const RewardsVault = () => {
   const [loading, setLoading] = useState(true);
   const [revealActive, setRevealActive] = useState(false);
   const [revealReward, setRevealReward] = useState(null);
+  const [multiRevealActive, setMultiRevealActive] = useState(false);
+  const [multiResults, setMultiResults] = useState([]);
   const [toast, setToast] = useState("");
   const [currentPool, setCurrentPool] = useState("app"); // 'app' or 'coupons'
 
@@ -471,6 +474,26 @@ const RewardsVault = () => {
       console.error(err);
       showToastMessage(
         err.response?.data?.message || "Failed to perform pull.",
+      );
+    }
+  };
+
+  const performMultiPull = async (pool) => {
+    try {
+      const res = await api.post("/gacha/pull-multi", { pool });
+      updateUser({
+        credits: res.data.credits,
+        pityCounterApp: res.data.pityApp,
+        pityCounterCoupons: res.data.pityCoupons,
+        totalPullsApp: res.data.totalPullsApp,
+        totalPullsCoupons: res.data.totalPullsCoupons,
+      });
+      setMultiResults(res.data.results);
+      setMultiRevealActive(true);
+    } catch (err) {
+      console.error(err);
+      showToastMessage(
+        err.response?.data?.message || "Failed to perform multi-pull.",
       );
     }
   };
@@ -755,7 +778,19 @@ const RewardsVault = () => {
     <div style={styles.container}>
       {toast && <div className="toast">{toast}</div>}
 
-      {/* Reveal Modal */}
+      {/* Multi-pull reveal */}
+      {multiRevealActive && multiResults.length > 0 && (
+        <MultiPullReveal
+          results={multiResults}
+          onClose={() => {
+            setMultiRevealActive(false);
+            setMultiResults([]);
+            fetchVault();
+          }}
+        />
+      )}
+
+      {/* Single reveal modal */}
       {revealActive && revealReward && (
         <div style={styles.revealOverlay}>
           <div
@@ -821,14 +856,77 @@ const RewardsVault = () => {
             <span style={styles.statValue}>{currentTotalPulls}</span>
           </div>
         </div>
-        <button
-          className="btn btn-primary btn-full"
-          style={{ marginTop: "16px", fontSize: "1.1rem", padding: "16px" }}
-          onClick={() => performPull(currentPool)}
-          disabled={!user?.credits || user?.credits < 1}
-        >
-          Perform Pull (1 Credit)
-        </button>
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          {/* Single pull */}
+          <button
+            className="btn btn-primary btn-full"
+            style={{ flex: 1, fontSize: "0.95rem", padding: "14px 8px" }}
+            onClick={() => performPull(currentPool)}
+            disabled={!user?.credits || user?.credits < 1}
+          >
+            ✦ 1 Pull
+            <span
+              style={{
+                fontSize: "0.72rem",
+                opacity: 0.7,
+                display: "block",
+                marginTop: 2,
+              }}
+            >
+              1 credit
+            </span>
+          </button>
+
+          {/* 10-pull — styled as premium */}
+          <button
+            onClick={() => performMultiPull(currentPool)}
+            disabled={!user?.credits || user?.credits < 10}
+            style={{
+              flex: 1.4,
+              padding: "14px 8px",
+              border: "none",
+              borderRadius: "var(--radius-lg)",
+              cursor: user?.credits >= 10 ? "pointer" : "not-allowed",
+              opacity: user?.credits >= 10 ? 1 : 0.45,
+              background: "linear-gradient(135deg, #7b68ee 0%, #d4af37 100%)",
+              color: "#fff",
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "0.95rem",
+              position: "relative",
+              overflow: "hidden",
+              transition: "all 0.2s",
+              boxShadow:
+                user?.credits >= 10
+                  ? "0 4px 20px rgba(123,104,238,0.4)"
+                  : "none",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(108deg, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)",
+                animation: "gacha-shimmer 2.5s ease-in-out infinite",
+                pointerEvents: "none",
+              }}
+            />
+            <span style={{ position: "relative", zIndex: 1 }}>✦ 10 Pulls</span>
+            <span
+              style={{
+                fontSize: "0.72rem",
+                opacity: 0.85,
+                display: "block",
+                marginTop: 2,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              10 credits · guaranteed rare+
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Customization Drawer */}

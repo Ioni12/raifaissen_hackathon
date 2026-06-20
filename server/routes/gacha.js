@@ -31,6 +31,59 @@ const performPull = (pool, pityCounter) => {
   return { cosmetic: selectedCosmetic, tier };
 };
 
+// POST /api/gacha/pull-multi — perform 10 pulls at once
+router.post("/pull-multi", authMiddleware, async (req, res) => {
+  try {
+    const { pool = "app" } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (user.credits < 10) {
+      return res.status(400).json({ message: "Not enough credits! Need 10." });
+    }
+
+    const pityKey =
+      pool === "coupons" ? "pityCounterCoupons" : "pityCounterApp";
+    const totalPullsKey =
+      pool === "coupons" ? "totalPullsCoupons" : "totalPullsApp";
+    const unlockedKey =
+      pool === "coupons" ? "unlockedCoupons" : "unlockedCosmetics";
+
+    user.credits -= 10;
+    const results = [];
+
+    for (let i = 0; i < 10; i++) {
+      user[pityKey] += 1;
+      user[totalPullsKey] += 1;
+      const { cosmetic, tier } = performPull(pool, user[pityKey]);
+      if (tier === "legendary" || tier === "ultra_rare") user[pityKey] = 0;
+      user.pulls.unshift({
+        cosmeticId: cosmetic.id,
+        tier,
+        pool,
+        timestamp: new Date(),
+      });
+      if (!user[unlockedKey].includes(cosmetic.id))
+        user[unlockedKey].push(cosmetic.id);
+      results.push({ cosmetic, tier });
+    }
+
+    await user.save();
+
+    res.json({
+      results,
+      pool,
+      pityApp: user.pityCounterApp,
+      pityCoupons: user.pityCounterCoupons,
+      credits: user.credits,
+      totalPullsApp: user.totalPullsApp,
+      totalPullsCoupons: user.totalPullsCoupons,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // POST /api/gacha/pull — perform a pull
 router.post("/pull", authMiddleware, async (req, res) => {
   try {
@@ -42,9 +95,12 @@ router.post("/pull", authMiddleware, async (req, res) => {
     }
 
     // Determine which pity counter to use
-    const pityKey = pool === "coupons" ? "pityCounterCoupons" : "pityCounterApp";
-    const totalPullsKey = pool === "coupons" ? "totalPullsCoupons" : "totalPullsApp";
-    const unlockedKey = pool === "coupons" ? "unlockedCoupons" : "unlockedCosmetics";
+    const pityKey =
+      pool === "coupons" ? "pityCounterCoupons" : "pityCounterApp";
+    const totalPullsKey =
+      pool === "coupons" ? "totalPullsCoupons" : "totalPullsApp";
+    const unlockedKey =
+      pool === "coupons" ? "unlockedCoupons" : "unlockedCosmetics";
 
     // Spend credit, increment pity and total pulls
     user.credits -= 1;
