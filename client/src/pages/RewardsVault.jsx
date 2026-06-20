@@ -739,23 +739,11 @@ const RewardsVault = () => {
         {/* Action */}
         {isUnlocked ? (
           isActive ? (
-            <span style={styles.activeCheck}>
-              <Check
-                size={13}
-                style={{ display: "inline", marginRight: "3px" }}
-              />
-              Active
-            </span>
+            <span style={styles.activeCheck}>✓ Active</span>
           ) : currentPool === "app" ? (
             <span style={styles.inactiveApply}>Apply</span>
           ) : (
-            <span style={styles.activeCheck}>
-              <Check
-                size={13}
-                style={{ display: "inline", marginRight: "3px" }}
-              />
-              Got it
-            </span>
+            <span style={styles.activeCheck}>✓ Got it</span>
           )
         ) : null}
       </div>
@@ -1300,22 +1288,34 @@ const styles = {
     marginTop: "2px",
   },
   activeCheck: {
-    fontSize: "0.78rem",
-    color: "var(--accent)",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: "0.68rem",
     fontFamily: "var(--font-display)",
     fontWeight: 800,
-    display: "flex",
-    alignItems: "center",
-  },
-  inactiveApply: {
-    fontSize: "0.78rem",
-    color: "var(--text-secondary)",
-    cursor: "pointer",
-    border: "1px solid var(--border)",
+    color: "var(--accent)",
+    background: "var(--accent-dim)",
+    border: "1px solid var(--accent)",
     borderRadius: "var(--radius-full)",
     padding: "4px 10px",
-    background: "var(--bg-surface)",
-    transition: "all 0.15s",
+    whiteSpace: "nowrap",
+  },
+  inactiveApply: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: "0.68rem",
+    fontFamily: "var(--font-display)",
+    fontWeight: 800,
+    color: "var(--text-on-accent)",
+    background: "var(--accent)",
+    border: "none",
+    borderRadius: "var(--radius-full)",
+    padding: "5px 12px",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
   },
   revealOverlay: {
     position: "fixed",
