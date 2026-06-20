@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
@@ -11,16 +11,12 @@ import {
   Users,
   Flame,
   Trophy,
+  Snowflake,
+  Wifi,
 } from "lucide-react";
 
 const GableCross = ({ size = 24, color = "currentColor" }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
     <path
       d="M15 80 L50 20 L85 80"
       stroke={color}
@@ -39,31 +35,432 @@ const GableCross = ({ size = 24, color = "currentColor" }) => (
 );
 
 const QUICK_ACTIONS = [
-  {
-    id: "kuik",
-    icon: ArrowUpRight,
-    label: "Transfer",
-    action: "kuik",
-  },
-  {
-    id: "topup",
-    icon: CreditCard,
-    label: "Top Up",
-    action: "transaction",
-  },
-  {
-    id: "savings",
-    icon: PiggyBank,
-    label: "Save",
-    action: "savings",
-  },
-  {
-    id: "invite",
-    icon: Users,
-    label: "Invite",
-    action: "referral",
-  },
+  { id: "kuik", icon: ArrowUpRight, label: "Transfer", action: "kuik" },
+  { id: "topup", icon: CreditCard, label: "Top Up", action: "transaction" },
+  { id: "savings", icon: PiggyBank, label: "Save", action: "savings" },
+  { id: "invite", icon: Users, label: "Invite", action: "referral" },
 ];
+
+// ── Flip Card ────────────────────────────────────────────────────────────────
+function FlipCard({ user, skin }) {
+  const [flipped, setFlipped] = useState(false);
+  const [frozen, setFrozen] = useState(false);
+  const c = skin.text;
+
+  const cardStyle = {
+    borderRadius: "var(--radius-xl)",
+    padding: "20px",
+    position: "absolute",
+    inset: 0,
+    background: skin.bg,
+    color: c,
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+    boxShadow: skin.borderColor
+      ? `0 0 0 2px ${skin.borderColor}, 0 8px 32px rgba(0,0,0,0.18)`
+      : "0 8px 32px rgba(0,0,0,0.14)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  };
+
+  return (
+    <div
+      onClick={() => setFlipped((f) => !f)}
+      style={{
+        width: "100%",
+        aspectRatio: "1.586",
+        cursor: "pointer",
+        perspective: 1200,
+        userSelect: "none",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          transformStyle: "preserve-3d",
+          transition: "transform 0.55s cubic-bezier(0.45,0.05,0.55,0.95)",
+          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
+      >
+        {/* ── FRONT ── */}
+        <div style={cardStyle}>
+          {/* Shimmer overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "var(--radius-xl)",
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 60%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Frozen overlay */}
+          {frozen && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "var(--radius-xl)",
+                background: "rgba(0,100,200,0.35)",
+                backdropFilter: "blur(3px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 2,
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <Snowflake size={32} color="#fff" />
+                <div
+                  style={{
+                    color: "#fff",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 800,
+                    fontSize: "0.85rem",
+                    marginTop: 6,
+                  }}
+                >
+                  Card Frozen
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <GableCross size={20} color={c} />
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 900,
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.08em",
+                  opacity: 0.9,
+                }}
+              >
+                YOUTH
+              </span>
+            </div>
+            {/* Contactless icon */}
+            <Wifi
+              size={18}
+              color={c}
+              style={{ opacity: 0.6, transform: "rotate(90deg)" }}
+            />
+          </div>
+
+          {/* EMV chip */}
+          <div
+            style={{
+              width: 36,
+              height: 28,
+              borderRadius: 4,
+              background: `linear-gradient(135deg, ${c}55, ${c}22)`,
+              border: `1px solid ${c}40`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 22,
+                height: 16,
+                borderRadius: 2,
+                border: `0.5px solid ${c}60`,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 1,
+                padding: 2,
+              }}
+            >
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  style={{ background: `${c}40`, borderRadius: 1 }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: "0.62rem",
+                opacity: 0.65,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: 4,
+              }}
+            >
+              Available Balance
+            </div>
+            <div
+              style={{
+                fontSize: "1.9rem",
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}
+            >
+              2,000{" "}
+              <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>ALL</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: "0.5rem",
+                  opacity: 0.6,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Cardholder
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 700,
+                  fontSize: "0.78rem",
+                  marginTop: 2,
+                }}
+              >
+                {user?.name}
+              </div>
+            </div>
+            {/* Mastercard circles */}
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: c,
+                  opacity: 0.55,
+                }}
+              />
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: c,
+                  opacity: 0.35,
+                  marginLeft: -10,
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              textAlign: "center",
+              opacity: 0.35,
+              fontSize: "0.5rem",
+              fontFamily: "var(--font-display)",
+              letterSpacing: "0.08em",
+            }}
+          >
+            TAP TO SEE DETAILS
+          </div>
+        </div>
+
+        {/* ── BACK ── */}
+        <div style={{ ...cardStyle, transform: "rotateY(180deg)" }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "var(--radius-xl)",
+              background:
+                "linear-gradient(135deg, rgba(0,0,0,0.15) 0%, transparent 50%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Magnetic stripe */}
+          <div
+            style={{
+              position: "absolute",
+              top: 40,
+              left: 0,
+              right: 0,
+              height: 40,
+              background: `${c}25`,
+              borderTop: `1px solid ${c}30`,
+              borderBottom: `1px solid ${c}30`,
+            }}
+          />
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 900,
+                fontSize: "0.75rem",
+                letterSpacing: "0.08em",
+                opacity: 0.7,
+              }}
+            >
+              RAIFFEISEN YOUTH
+            </span>
+          </div>
+
+          {/* Card number */}
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <div
+              style={{
+                fontSize: "0.5rem",
+                opacity: 0.6,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: 6,
+              }}
+            >
+              Card Number
+            </div>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+              }}
+            >
+              4242 4242 4242 2026
+            </div>
+          </div>
+
+          {/* CVV + Expiry */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-around",
+              marginTop: 4,
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "0.48rem",
+                  opacity: 0.6,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: 4,
+                }}
+              >
+                Expires
+              </div>
+              <div
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                }}
+              >
+                12/28
+              </div>
+            </div>
+            <div style={{ width: 1, background: `${c}30` }} />
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "0.48rem",
+                  opacity: 0.6,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: 4,
+                }}
+              >
+                CVV
+              </div>
+              <div
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                }}
+              >
+                •••
+              </div>
+            </div>
+          </div>
+
+          {/* Freeze toggle */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setFrozen((f) => !f);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              background: frozen ? "rgba(0,100,200,0.35)" : `${c}18`,
+              border: `1px solid ${frozen ? "rgba(100,180,255,0.6)" : c + "40"}`,
+              borderRadius: "var(--radius-full)",
+              padding: "8px 20px",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
+            <Snowflake size={14} color={frozen ? "#60c0ff" : c} />
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: "0.72rem",
+                color: frozen ? "#60c0ff" : c,
+              }}
+            >
+              {frozen ? "Unfreeze Card" : "Freeze Card"}
+            </span>
+          </div>
+
+          <div
+            style={{
+              textAlign: "center",
+              opacity: 0.35,
+              fontSize: "0.5rem",
+              fontFamily: "var(--font-display)",
+              letterSpacing: "0.08em",
+            }}
+          >
+            TAP TO FLIP BACK
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth();
@@ -96,7 +493,6 @@ export default function Dashboard() {
   };
 
   const skin = getSkin(user?.activeCardSkin);
-  const cardTextColor = skin.text;
 
   return (
     <div style={styles.page} className="animate-fade-in">
@@ -115,137 +511,9 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Debit Card */}
+      {/* Flip Card */}
       <div style={{ padding: "0 16px" }}>
-        <div
-          style={{
-            ...styles.card,
-            background: skin.bg,
-            color: cardTextColor,
-            boxShadow: skin.borderColor
-              ? `0 0 0 2px ${skin.borderColor}, var(--shadow-md)`
-              : "var(--shadow-md)",
-          }}
-        >
-          <div style={styles.cardTop}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <GableCross size={22} color={cardTextColor} />
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 900,
-                  fontSize: "0.85rem",
-                  letterSpacing: "0.06em",
-                  opacity: 0.9,
-                }}
-              >
-                YOUTH
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                opacity: 0.6,
-              }}
-            >
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: "50%",
-                  background: cardTextColor,
-                  opacity: 0.6,
-                }}
-              />
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: "50%",
-                  background: cardTextColor,
-                  opacity: 0.3,
-                  marginLeft: -8,
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={styles.cardBalance}>
-            <div
-              style={{
-                fontSize: "0.7rem",
-                opacity: 0.7,
-                fontWeight: 500,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                marginBottom: 6,
-              }}
-            >
-              Available Balance
-            </div>
-            <div
-              style={{
-                fontSize: "2rem",
-                fontFamily: "var(--font-display)",
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              2,000{" "}
-              <span style={{ fontSize: "1rem", fontWeight: 600 }}>ALL</span>
-            </div>
-          </div>
-
-          <div style={styles.cardBottom}>
-            <div>
-              <div
-                style={{
-                  fontSize: "0.58rem",
-                  opacity: 0.6,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Cardholder
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: "0.85rem",
-                  marginTop: 2,
-                }}
-              >
-                {user?.name}
-              </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div
-                style={{
-                  fontSize: "0.58rem",
-                  opacity: 0.6,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Number
-              </div>
-              <div
-                style={{
-                  fontFamily: "monospace",
-                  fontWeight: 700,
-                  fontSize: "0.8rem",
-                  letterSpacing: "2px",
-                  marginTop: 2,
-                }}
-              >
-                •••• 2026
-              </div>
-            </div>
-          </div>
-        </div>
+        <FlipCard user={user} skin={skin} />
       </div>
 
       {/* Quick Actions */}
@@ -380,27 +648,6 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-  },
-  card: {
-    borderRadius: "var(--radius-xl)",
-    padding: "20px",
-    position: "relative",
-    overflow: "hidden",
-    boxShadow: "var(--shadow-md)",
-  },
-  cardTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 22,
-  },
-  cardBalance: {
-    marginBottom: 26,
-  },
-  cardBottom: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
   },
   section: {
     padding: "20px 16px 10px",
