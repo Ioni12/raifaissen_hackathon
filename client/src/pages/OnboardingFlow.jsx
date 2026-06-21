@@ -362,21 +362,83 @@ function ProgressRing({ done, total, color = "#ffd600" }) {
   );
 }
 
-// ─── Mission Card (flip on tap) ───────────────────────────────────────────────
-function MissionCard({ mission, done, onComplete, loading, burstId, color }) {
-  const [flipped, setFlipped] = useState(false);
-  const [popping, setPopping] = useState(false);
+// ─── Input config per mission ─────────────────────────────────────────────────
+const MISSION_INPUT = {
+  emailVerified: {
+    type: "email",
+    placeholder: "your@email.com",
+    label: "Email address",
+  },
+  phoneVerified: {
+    type: "tel",
+    placeholder: "+355 6X XXX XXXX",
+    label: "Phone number",
+  },
+  idUploaded: {
+    type: "text",
+    placeholder: "e.g. AB123456",
+    label: "ID / Passport number",
+  },
+  addressConfirmed: {
+    type: "text",
+    placeholder: "Street, City",
+    label: "Home address",
+  },
+  pinSet: {
+    type: "password",
+    placeholder: "6-digit PIN",
+    label: "Set your PIN",
+    minLen: 6,
+    maxLen: 6,
+  },
+};
 
-  const handleComplete = () => {
+// ─── Mission Card (flip on tap) ───────────────────────────────────────────────
+function MissionCard({ mission, done, onComplete, loading, color }) {
+  const [flipped, setFlipped] = useState(false);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const [popping, setPopping] = useState(false);
+  const inputCfg = MISSION_INPUT[mission.id] || {};
+
+  const validate = () => {
+    const v = value.trim();
+    if (!v) return "This field is required";
+    if (mission.id === "emailVerified" && !/\S+@\S+\.\S+/.test(v))
+      return "Enter a valid email";
+    if (mission.id === "phoneVerified" && v.replace(/\D/g, "").length < 9)
+      return "Enter a valid phone number";
+    if (mission.id === "pinSet" && !/^\d{6}$/.test(v))
+      return "PIN must be exactly 6 digits";
+    return "";
+  };
+
+  const handleSubmit = (e) => {
+    e.stopPropagation();
+    const err = validate();
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError("");
     setPopping(true);
     setTimeout(() => setPopping(false), 700);
     onComplete(mission.id);
   };
 
+  // Card needs more height when flipped to show input
+  const cardHeight = flipped && !done ? 148 : 72;
+
   return (
     <div
-      style={{ position: "relative", perspective: "600px", marginBottom: 10 }}
-      onClick={() => !flipped && setFlipped(true)}
+      style={{
+        position: "relative",
+        perspective: "800px",
+        marginBottom: 10,
+        height: cardHeight,
+        transition: "height 0.35s ease",
+      }}
+      onClick={() => !flipped && !done && setFlipped(true)}
     >
       <div
         style={{
@@ -385,7 +447,7 @@ function MissionCard({ mission, done, onComplete, loading, burstId, color }) {
           transition: "transform 0.45s cubic-bezier(0.4,0,0.2,1)",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           borderRadius: "var(--radius-lg)",
-          height: 72,
+          height: cardHeight,
         }}
       >
         {/* Front */}
@@ -394,6 +456,7 @@ function MissionCard({ mission, done, onComplete, loading, burstId, color }) {
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             ...cardFace,
+            height: cardHeight,
             background: done
               ? `linear-gradient(135deg,${color}22,${color}08)`
               : "rgba(255,255,255,0.04)",
@@ -413,7 +476,7 @@ function MissionCard({ mission, done, onComplete, loading, burstId, color }) {
             >
               {mission.name}
             </div>
-            <div style={{ fontSize: "0.72rem", color: color, marginTop: 2 }}>
+            <div style={{ fontSize: "0.72rem", color, marginTop: 2 }}>
               {mission.reward}
             </div>
           </div>
@@ -432,59 +495,140 @@ function MissionCard({ mission, done, onComplete, loading, burstId, color }) {
               <Check size={14} color="#000" />
             </div>
           ) : (
-            <ChevronRight
-              size={16}
-              color="var(--text-muted)"
-              style={{ transition: "transform 0.2s" }}
-            />
+            <ChevronRight size={16} color="var(--text-muted)" />
           )}
           {popping && <ConfettiBurst active color={color} />}
         </div>
-        {/* Back */}
+
+        {/* Back — with real input */}
         <div
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            ...cardFace,
-            background: `linear-gradient(135deg,${color}22,${color}08)`,
-            border: `1px solid ${color}60`,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: cardHeight,
+            background: `linear-gradient(135deg,${color}18,${color}06)`,
+            border: `1px solid ${color}55`,
+            borderRadius: "var(--radius-lg)",
+            padding: "12px 14px",
+            display: "flex",
             flexDirection: "column",
-            gap: 10,
-            alignItems: "center",
-            padding: "16px",
+            gap: 8,
           }}
         >
-          <div
-            style={{
-              fontSize: "0.75rem",
-              color: "var(--text-muted)",
-              textAlign: "center",
-            }}
-          >
-            🎁 Complete this to earn{" "}
-            <strong style={{ color }}>{mission.reward}</strong>
-          </div>
-          {!done ? (
-            <button
-              className="btn btn-primary btn-sm btn-full"
-              onClick={handleComplete}
-              disabled={loading}
-              style={{ background: color, color: "#000", fontWeight: 800 }}
-            >
-              {loading ? "..." : "Complete Mission"}
-            </button>
-          ) : (
+          {done ? (
             <div
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
                 color,
                 fontFamily: "var(--font-display)",
                 fontWeight: 700,
-                fontSize: "0.85rem",
+                fontSize: "0.9rem",
               }}
             >
               ✓ Mission Complete!
             </div>
+          ) : (
+            <>
+              {/* Label + reward hint */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <label
+                  style={{
+                    fontSize: "0.7rem",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.6)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {inputCfg.label || "Enter value"}
+                </label>
+                <span
+                  style={{
+                    fontSize: "0.62rem",
+                    color,
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 700,
+                  }}
+                >
+                  🎁 {mission.reward}
+                </span>
+              </div>
+
+              {/* Input */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type={inputCfg.type || "text"}
+                  placeholder={inputCfg.placeholder || ""}
+                  value={value}
+                  maxLength={inputCfg.maxLen}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    setError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
+                  style={{
+                    flex: 1,
+                    background: "rgba(255,255,255,0.08)",
+                    border: `1px solid ${error ? "#f87171" : color + "50"}`,
+                    borderRadius: "var(--radius-md)",
+                    color: "#fff",
+                    fontFamily: "var(--font-body)",
+                    fontSize: "0.85rem",
+                    padding: "8px 12px",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  style={{
+                    background: color,
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "var(--radius-md)",
+                    padding: "8px 14px",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 800,
+                    fontSize: "0.78rem",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    opacity: loading ? 0.5 : 1,
+                  }}
+                >
+                  {loading ? "…" : "✓"}
+                </button>
+              </div>
+
+              {/* Validation error */}
+              {error && (
+                <div
+                  style={{
+                    fontSize: "0.65rem",
+                    color: "#f87171",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -496,7 +640,6 @@ const cardFace = {
   top: 0,
   left: 0,
   right: 0,
-  bottom: 0,
   display: "flex",
   alignItems: "center",
   gap: 14,
