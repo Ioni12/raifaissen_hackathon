@@ -45,7 +45,6 @@ const GableCross = ({ size = 22, color = "currentColor" }) => (
 const TABS = [
   { path: "/dashboard", icon: Home, label: "Home" },
   { path: "/vault", icon: Star, label: "Vault" },
-  { path: "/social", icon: Users, label: "Social" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
