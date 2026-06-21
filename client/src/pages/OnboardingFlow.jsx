@@ -13,8 +13,69 @@ import {
   Lock,
   Check,
   ChevronRight,
-  Star,
 } from "lucide-react";
+
+// ─── Audio helpers ────────────────────────────────────────────────────────────
+let _ac = null;
+function getAC() {
+  if (!_ac || _ac.state === "closed")
+    _ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ac.state === "suspended") _ac.resume();
+  return _ac;
+}
+function tone(freq, dur, vol = 0.18, type = "sine", delay = 0) {
+  try {
+    const ac = getAC(),
+      t = ac.currentTime + delay;
+    const o = ac.createOscillator(),
+      g = ac.createGain();
+    o.connect(g);
+    g.connect(ac.destination);
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  } catch (_) {}
+}
+function playSwipe() {
+  tone(440, 0.12, 0.1, "sine");
+}
+function playMissionComplete(index) {
+  const base = 440 + index * 40;
+  tone(base, 0.3, 0.18, "triangle");
+  tone(base * 1.25, 0.5, 0.14, "sine", 0.06);
+  tone(base * 1.5, 0.7, 0.1, "sine", 0.13);
+  // impact noise
+  try {
+    const ac = getAC(),
+      now = ac.currentTime;
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.12, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const f = ac.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 1200;
+    f.Q.value = 0.8;
+    const g = ac.createGain();
+    src.connect(f);
+    f.connect(g);
+    g.connect(ac.destination);
+    g.gain.setValueAtTime(0.4, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    src.start(now);
+    src.stop(now + 0.15);
+  } catch (_) {}
+}
+function playArchetypeReveal(color) {
+  [523, 659, 784, 1047].forEach((f, i) =>
+    tone(f, 1.0, 0.2, "triangle", i * 0.08),
+  );
+}
 
 // ─── Archetype data ───────────────────────────────────────────────────────────
 const ARCHETYPES = {
@@ -146,6 +207,65 @@ const MISSIONS = [
     Icon: Lock,
   },
 ];
+
+// ─── Ambient background canvas ────────────────────────────────────────────────
+function AmbientBg({ color = "#7b68ee" }) {
+  const ref = useRef(null);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    cv.width = 375;
+    cv.height = 680;
+    const h = color.replace("#", "");
+    const R = parseInt(h.slice(0, 2), 16),
+      G = parseInt(h.slice(2, 4), 16),
+      B = parseInt(h.slice(4, 6), 16);
+    const pts = Array.from({ length: 18 }, () => ({
+      x: Math.random() * 375,
+      y: Math.random() * 680,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: 1 + Math.random() * 2,
+      life: Math.random(),
+    }));
+    const draw = () => {
+      ctx.clearRect(0, 0, 375, 680);
+      pts.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life += 0.003;
+        if (p.x < 0) p.x = 375;
+        if (p.x > 375) p.x = 0;
+        if (p.y < 0) p.y = 680;
+        if (p.y > 680) p.y = 0;
+        const a = (Math.sin(p.life) * 0.5 + 0.5) * 0.25;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${R},${G},${B},${a})`;
+        ctx.fill();
+      });
+      rafRef.current = requestAnimationFrame(draw);
+    };
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [color]);
+  return (
+    <canvas
+      ref={ref}
+      width={375}
+      height={680}
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+        opacity: 0.7,
+      }}
+    />
+  );
+}
 
 // ─── Tiny confetti burst ──────────────────────────────────────────────────────
 function ConfettiBurst({ active, color = "#ffd600" }) {
@@ -429,6 +549,7 @@ export default function OnboardingFlow() {
 
   // ── Personality answer ──
   const handleAnswer = (dir) => {
+    playSwipe();
     setSwipeDir(dir);
     setTimeout(() => {
       const val = dir === "left" ? "0" : "1";
@@ -437,9 +558,13 @@ export default function OnboardingFlow() {
       setSwipeDir(null);
       if (next.length === 3) {
         const key = next.join("");
-        setArchetype(ARCHETYPES[key] || ARCHETYPES["010"]);
+        const arch = ARCHETYPES[key] || ARCHETYPES["010"];
+        setArchetype(arch);
         setStep(2);
-        setTimeout(() => setArchetypeRevealPhase(1), 200);
+        setTimeout(() => {
+          setArchetypeRevealPhase(1);
+          playArchetypeReveal(arch.color);
+        }, 200);
       }
     }, 320);
   };
@@ -477,6 +602,8 @@ export default function OnboardingFlow() {
   const handleQuestComplete = async (questId) => {
     setLoading(true);
     setBurstId(questId);
+    const missionIndex = MISSIONS.findIndex((m) => m.id === questId);
+    playMissionComplete(missionIndex >= 0 ? missionIndex : 0);
     try {
       const res = await api.post(`/quests/${camelToSnake(questId)}/complete`);
       const newP = { ...questProgress, [questId]: true };
@@ -520,6 +647,7 @@ export default function OnboardingFlow() {
       `}</style>
 
       <div style={S.phone} data-theme="theme_neon_city">
+        <AmbientBg color={archetype?.color || "#7b68ee"} />
         {/* Credits toast */}
         {creditsAnim && (
           <div
@@ -617,7 +745,46 @@ export default function OnboardingFlow() {
                 gap: 20,
               }}
             >
-              <div style={{ fontSize: "3.5rem", lineHeight: 1 }}>✦</div>{" "}
+              {/* Hero glow orb */}
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    width: 130,
+                    height: 130,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle,rgba(212,175,55,0.3) 0%,transparent 70%)",
+                    filter: "blur(16px)",
+                  }}
+                />
+                <div
+                  style={{
+                    width: 86,
+                    height: 86,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg,rgba(212,175,55,0.22),rgba(123,104,238,0.12))",
+                    border: "1.5px solid rgba(212,175,55,0.45)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 36px rgba(212,175,55,0.28)",
+                    position: "relative",
+                    zIndex: 1,
+                    animation: "gacha-pulse 2.5s ease-in-out infinite",
+                  }}
+                >
+                  <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>✦</span>
+                </div>
+              </div>
               <h2 style={S.title}>
                 Welcome to
                 <br />
@@ -635,6 +802,35 @@ export default function OnboardingFlow() {
                   <strong>3 friends</strong> already joined in Tirana this week
                 </span>
               </div>
+              {/* Step preview */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                {["🎯 Quiz", "🎰 Pull", "⚡ Missions", "🏆 2,000 ALL"].map(
+                  (s, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "var(--radius-full)",
+                        padding: "4px 10px",
+                        fontSize: "0.6rem",
+                        color: "rgba(255,255,255,0.6)",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {s}
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
             <div style={{ padding: "0 0 8px" }}>
               <div
@@ -650,6 +846,13 @@ export default function OnboardingFlow() {
               <button
                 className="btn btn-primary btn-full"
                 onClick={() => setStep(1)}
+                style={{
+                  fontSize: "1rem",
+                  padding: "16px",
+                  background: "linear-gradient(135deg,#7b68ee,#d4af37)",
+                  boxShadow: "0 4px 20px rgba(123,104,238,0.4)",
+                  border: "none",
+                }}
               >
                 Start & Claim First Pull 🎰
               </button>
