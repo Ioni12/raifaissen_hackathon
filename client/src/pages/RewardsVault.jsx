@@ -479,6 +479,16 @@ const RewardsVault = () => {
   };
 
   const performMultiPull = async (pool) => {
+    // Unlock audio IMMEDIATELY on user gesture before any async work
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") await ctx.resume();
+        ctx.close(); // we just needed to unlock, MultiPullReveal creates its own
+      }
+    } catch (_) {}
+
     try {
       const res = await api.post("/gacha/pull-multi", { pool });
       updateUser({
