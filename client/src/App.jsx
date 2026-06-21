@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import OnboardingFlow from "./pages/OnboardingFlow";
 import Dashboard from "./pages/Dashboard";
-import SocialFeed from "./pages/SocialFeed";
 import RewardsVault from "./pages/RewardsVault";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -109,16 +108,6 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <RewardsVault />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/social"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <SocialFeed />
               </Layout>
             </ProtectedRoute>
           }
