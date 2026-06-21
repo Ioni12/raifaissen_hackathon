@@ -414,6 +414,264 @@ function ThemeMockup({ themeId, isActive }) {
   );
 }
 
+// ── CouponCard — looks like a real voucher ────────────────────────────────────
+const BRAND_COLORS = {
+  Cineplex: {
+    bg: "linear-gradient(135deg,#1a0033,#6d28d9)",
+    accent: "#c084fc",
+    text: "#fff",
+  },
+  Vodafone: {
+    bg: "linear-gradient(135deg,#1a0000,#dc2626)",
+    accent: "#f87171",
+    text: "#fff",
+  },
+  Zara: {
+    bg: "linear-gradient(135deg,#0a0a0a,#374151)",
+    accent: "#d1d5db",
+    text: "#fff",
+  },
+  Starbucks: {
+    bg: "linear-gradient(135deg,#00260c,#16a34a)",
+    accent: "#86efac",
+    text: "#fff",
+  },
+  "Local Café": {
+    bg: "linear-gradient(135deg,#1c0a00,#92400e)",
+    accent: "#fbbf24",
+    text: "#fff",
+  },
+  "Snack World": {
+    bg: "linear-gradient(135deg,#0a1628,#1d4ed8)",
+    accent: "#60a5fa",
+    text: "#fff",
+  },
+  "Special Events": {
+    bg: "linear-gradient(135deg,#1a1200,#d97706)",
+    accent: "#fcd34d",
+    text: "#000",
+  },
+};
+
+function CouponCard({ cosmetic, isUnlocked, tierColor }) {
+  const brand = BRAND_COLORS[cosmetic.brand] || {
+    bg: "linear-gradient(135deg,#111,#333)",
+    accent: "#9ca3af",
+    text: "#fff",
+  };
+  const isHigh =
+    cosmetic.tier === "legendary" || cosmetic.tier === "ultra_rare";
+
+  return (
+    <div
+      style={{
+        borderRadius: "var(--radius-lg)",
+        overflow: "hidden",
+        opacity: isUnlocked ? 1 : 0.38,
+        boxShadow: isUnlocked && isHigh ? `0 0 18px ${tierColor}35` : "none",
+        transition: "all 0.2s",
+        position: "relative",
+      }}
+    >
+      {/* Main coupon body */}
+      <div
+        style={{
+          background: brand.bg,
+          padding: "14px 16px 10px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Shimmer for high tiers */}
+        {isUnlocked && isHigh && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(108deg,transparent 35%,rgba(255,255,255,0.08) 50%,transparent 65%)",
+              animation: "gacha-shimmer 2.5s ease-in-out infinite",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
+        {/* Left side */}
+        <div style={{ flex: 1, zIndex: 1 }}>
+          {/* Brand */}
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 900,
+              fontSize: "0.7rem",
+              color: brand.accent,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              marginBottom: 4,
+            }}
+          >
+            {cosmetic.brand || "Reward"}
+          </div>
+          {/* Deal */}
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "1.05rem",
+              color: brand.text,
+              lineHeight: 1.1,
+            }}
+          >
+            {cosmetic.label}
+          </div>
+          {cosmetic.description && (
+            <div
+              style={{
+                fontSize: "0.65rem",
+                color: `${brand.text}88`,
+                marginTop: 4,
+                lineHeight: 1.3,
+              }}
+            >
+              {cosmetic.description}
+            </div>
+          )}
+        </div>
+
+        {/* Right: tier badge */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 6,
+            zIndex: 1,
+          }}
+        >
+          {!isUnlocked ? (
+            <Lock size={18} color={`${brand.text}60`} />
+          ) : (
+            <div
+              style={{
+                background: `${brand.text}15`,
+                border: `1px solid ${brand.text}30`,
+                borderRadius: "var(--radius-full)",
+                padding: "3px 8px",
+                fontSize: "0.58rem",
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                color: brand.text,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              ✓ Unlocked
+            </div>
+          )}
+          <span
+            style={{
+              fontSize: "0.55rem",
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              color: tierColor,
+              background: tierColor + "22",
+              padding: "2px 7px",
+              borderRadius: 99,
+              border: `1px solid ${tierColor}44`,
+            }}
+          >
+            {cosmetic.tier.replace("_", " ")}
+          </span>
+        </div>
+      </div>
+
+      {/* Perforated divider */}
+      <div
+        style={{
+          position: "relative",
+          height: 12,
+          background: brand.bg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 -6px",
+        }}
+      >
+        {/* Left notch */}
+        <div
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            background: "var(--bg-base)",
+            marginLeft: -6,
+            flexShrink: 0,
+          }}
+        />
+        {/* Dashed line */}
+        <div
+          style={{
+            flex: 1,
+            borderTop: "1.5px dashed rgba(255,255,255,0.15)",
+            margin: "0 4px",
+          }}
+        />
+        {/* Right notch */}
+        <div
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            background: "var(--bg-base)",
+            marginRight: -6,
+            flexShrink: 0,
+          }}
+        />
+      </div>
+
+      {/* Barcode strip */}
+      <div
+        style={{
+          background: brand.bg,
+          padding: "8px 16px 12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* Fake barcode */}
+        <div style={{ display: "flex", gap: "1.5px", alignItems: "flex-end" }}>
+          {Array.from({ length: 22 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i % 3 === 0 ? 2 : 1,
+                height: 12 + (i % 4 === 0 ? 6 : i % 3 === 1 ? 3 : 0),
+                background: `${brand.text}${isUnlocked ? "60" : "25"}`,
+                borderRadius: 1,
+              }}
+            />
+          ))}
+        </div>
+        <div
+          style={{
+            fontSize: "0.5rem",
+            fontFamily: "monospace",
+            color: `${brand.text}50`,
+            letterSpacing: "0.1em",
+          }}
+        >
+          {isUnlocked ? "RY-2026" : "LOCKED"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const RewardsVault = () => {
   const { user, updateUser } = useAuth();
   const [vaultData, setVaultData] = useState(null);
@@ -817,23 +1075,142 @@ const RewardsVault = () => {
         </div>
       )}
 
-      {/* Header with Pool Tabs */}
-      <div style={styles.header}>
+      {/* Pool Selector — large visual cards */}
+      <div style={{ marginBottom: 16 }}>
         <h1 style={styles.pageTitle}>Rewards Vault</h1>
-        <div style={styles.poolTabs}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
+          {/* App Rewards tab */}
           <button
-            className={`pool-tab ${currentPool === "app" ? "active" : ""}`}
-            style={styles.poolTab}
             onClick={() => setCurrentPool("app")}
+            style={{
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "var(--radius-lg)",
+              padding: "14px 12px",
+              textAlign: "left",
+              background:
+                currentPool === "app"
+                  ? "linear-gradient(135deg,#7b68ee 0%,#a78bfa 100%)"
+                  : "var(--bg-elevated)",
+              border:
+                currentPool === "app"
+                  ? "1.5px solid #7b68ee"
+                  : "1.5px solid var(--border)",
+              boxShadow:
+                currentPool === "app"
+                  ? "0 4px 20px rgba(123,104,238,0.4)"
+                  : "none",
+              transition: "all 0.2s",
+              position: "relative",
+              overflow: "hidden",
+            }}
           >
-            App Rewards
+            {currentPool === "app" && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(108deg,transparent 35%,rgba(255,255,255,0.1) 50%,transparent 65%)",
+                  animation: "gacha-shimmer 2.5s ease-in-out infinite",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
+            <div style={{ fontSize: "1.5rem", marginBottom: 4 }}>🎨</div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                fontSize: "0.88rem",
+                color: currentPool === "app" ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              App Rewards
+            </div>
+            <div
+              style={{
+                fontSize: "0.65rem",
+                marginTop: 2,
+                color:
+                  currentPool === "app"
+                    ? "rgba(255,255,255,0.75)"
+                    : "var(--text-muted)",
+              }}
+            >
+              Skins, themes & badges
+            </div>
           </button>
+
+          {/* Coupons tab */}
           <button
-            className={`pool-tab ${currentPool === "coupons" ? "active" : ""}`}
-            style={styles.poolTab}
             onClick={() => setCurrentPool("coupons")}
+            style={{
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "var(--radius-lg)",
+              padding: "14px 12px",
+              textAlign: "left",
+              background:
+                currentPool === "coupons"
+                  ? "linear-gradient(135deg,#d4af37 0%,#f59e0b 100%)"
+                  : "var(--bg-elevated)",
+              border:
+                currentPool === "coupons"
+                  ? "1.5px solid #d4af37"
+                  : "1.5px solid var(--border)",
+              boxShadow:
+                currentPool === "coupons"
+                  ? "0 4px 20px rgba(212,175,55,0.4)"
+                  : "none",
+              transition: "all 0.2s",
+              position: "relative",
+              overflow: "hidden",
+            }}
           >
-            Coupons
+            {currentPool === "coupons" && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(108deg,transparent 35%,rgba(255,255,255,0.1) 50%,transparent 65%)",
+                  animation: "gacha-shimmer 2.5s ease-in-out infinite",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
+            <div style={{ fontSize: "1.5rem", marginBottom: 4 }}>🎟️</div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                fontSize: "0.88rem",
+                color:
+                  currentPool === "coupons" ? "#000" : "var(--text-primary)",
+              }}
+            >
+              Coupons
+            </div>
+            <div
+              style={{
+                fontSize: "0.65rem",
+                marginTop: 2,
+                color:
+                  currentPool === "coupons"
+                    ? "rgba(0,0,0,0.6)"
+                    : "var(--text-muted)",
+              }}
+            >
+              Real-world brand deals
+            </div>
           </button>
         </div>
       </div>
@@ -1081,14 +1458,23 @@ const RewardsVault = () => {
               })()}
             </>
           ) : (
-            /* Coupons — flat list unchanged */
+            /* Coupons — voucher card grid */
             <>
               <div style={styles.sectionHeader}>
-                <Star size={14} color="var(--text-muted)" />
-                <h3 style={styles.lockerHeader}>Unlocked Coupons</h3>
+                <span style={{ fontSize: "0.9rem" }}>🎟️</span>
+                <h3 style={styles.lockerHeader}>Your Coupons</h3>
               </div>
-              <div style={styles.lockerScrollable}>
-                {allCosmetics.map((cosmetic) => renderCosmeticRow(cosmetic))}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                {allCosmetics.map((cosmetic) => (
+                  <CouponCard
+                    key={cosmetic.id}
+                    cosmetic={cosmetic}
+                    isUnlocked={currentUnlocked.includes(cosmetic.id)}
+                    tierColor={getTierColor(cosmetic.tier)}
+                  />
+                ))}
               </div>
             </>
           )}
